@@ -1,6 +1,6 @@
 #pragma once
 
-const float EPSILON = 0.000001f;
+const float VEC_EPSILON = 0.000001f;
 
 // the anonymouse union allows Vec3 to be accessed via .x .y .z and
 // as a contiguous array using .v
@@ -21,6 +21,11 @@ struct Vec2
 Vec2 operator+(const Vec2& a, const Vec2& b);
 Vec2 operator-(const Vec2& a, const Vec2& b);
 Vec2 operator*(const Vec2& v, float f);
+float lenSqr(const Vec2& v);
+float len(const Vec2& v);
+void normalize(Vec2& v);
+Vec2 normalized(const Vec2& v); // return new
+
 
 struct Vec3
 {
@@ -42,3 +47,8 @@ Vec3 operator+(const Vec3& a, const Vec3& b);
 Vec3 operator-(const Vec3& a, const Vec3& b);
 Vec3 operator*(const Vec3& v, float f);
 float operator*(const Vec3& a, const Vec3& b);
+float lenSqr(const Vec3& v);
+float len(const Vec3& v);
+void normalize(Vec3& v);       // alters input vec
+Vec3 normalized(const Vec3& v); // return new
+float angle(const Vec3& a, const Vec3& b);
