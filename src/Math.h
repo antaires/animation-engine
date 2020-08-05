@@ -65,3 +65,22 @@ Vec3 reflect(const Vec3& a, const Vec3& b);
 Vec3 lerp(const Vec3& a, const Vec3& b, float t);
 Vec3 slerp(const Vec3& a, const Vec3& b, float t);
 Vec3 nlerp(const Vec3& a, const Vec3& b, float t);
+
+template<typename T>
+struct TVec4
+{
+  union {
+    struct {
+      T x;
+      T y;
+      T z;
+      T w;
+    };
+    T v[4];
+  };
+  inline TVec4() : x(0.0f), y(0.0f), z(0.0f), w(0.0f) {}
+  inline TVec4(T _x, T _y, T _z, T _w):x(_x), y(_y), z(_z), w(_w) {}
+  inline TVec4(T *fv): x(fv[0]), y(fv[1]), z(fv[2]), w(fv[3]) {}
+};
+typedef TVec4<float> Vec4;
+typedef TVec4<int> iVec4;
