@@ -30,7 +30,7 @@ ButtonState KeyboardState::GetKeyState(SDL_Scancode keyCode) const
 }
 
 // MOUSE STATE
-const Vec2& MouseState::GetPosition() const
+const vec2& MouseState::GetPosition() const
 {
   return m_MousePosition;
 }
@@ -130,7 +130,7 @@ void InputSystem::ProcessEvent(SDL_Event& event)
   switch(event.type)
   {
     case SDL_MOUSEWHEEL:
-      m_State.mouseState.m_ScrollWheel = Vec2(
+      m_State.mouseState.m_ScrollWheel = vec2(
         static_cast<float>(event.wheel.x)
         , static_cast<float>(event.wheel.y)
       );

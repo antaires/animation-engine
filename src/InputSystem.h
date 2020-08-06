@@ -28,17 +28,17 @@ public:
   friend class InputSystem;
 
   // for mouse position
-  const Vec2& GetPosition() const;
+  const vec2& GetPosition() const;
   bool GetButtonValue(int button) const;
   ButtonState GetButtonState(int button) const;
 
-  Vec2 m_MousePosition;
+  vec2 m_MousePosition;
 private:
   // store button data
   Uint32 m_CurrButtons;
   Uint32 m_PrevButtons;
 
-  Vec2 m_ScrollWheel;
+  vec2 m_ScrollWheel;
 
   bool m_IsRelative;
 };
