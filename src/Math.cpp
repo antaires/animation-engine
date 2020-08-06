@@ -445,3 +445,73 @@ void invert(mat4& m)
   }
   m = adjugate(m) * (1.0f / det);
 }
+
+// ***************** //
+// camera functions  //
+// ***************** //
+
+mat4 frustum(float l, float r, float b, float t, float n, float f)
+{
+  if( l == r || t == b || n == f )
+  {
+    std::cout<<"\nInvalid frustum";
+    return mat4();
+  }
+  return mat4(
+    (2.0f * n) / (r - 1), 0, 0, 0
+    , 0, (2.0f * n) / (t - b), 0, 0
+    , (r+l)/(r-l), (t+b)/(t-b), (-(f+n))/(f-n), -1
+    , 0, 0, (-2*f*n) / (f-n), 0
+  );
+}
+
+mat4 perspective(float fov, float aspect, float n, float f)
+{
+  float ymax = n * std::tanf(fov * 3.14159265359f / 360.0f);
+  float xmax = ymax * aspect;
+  return frustum(-xmax, xmax, -ymax, ymax, n, f);
+}
+
+// for 2d or isometric games
+mat4 ortho(float l, float r, float b, float t, float n, float f)
+{
+  if( l == r || t == b || n == f )
+  {
+    std::cout<<"\nInvalid ortho";
+    return mat4();
+  }
+  return mat4(
+    2.0f / (r-l), 0, 0, 0
+    , 0, 2.0f / (t-b), 0, 0
+    , 0, 0, -2.0f / (f-n), 0
+    , -((r+l)/(r-l)), -((t+b)/(t-b)), -((f+n)/(f-n)), 1
+  );
+}
+
+// construct a view matrix 
+mat4 lookAt(const vec3& position, const vec3& target, const vec3& up)
+{
+  vec3 f = normalized(target - position) * -1.0f;
+  vec3 r = cross(up, f);
+  // right handed
+  if (r == vec3(0, 0, 0))
+  {
+    std::cout<<"\nError in lookAt";
+    return mat4();
+  }
+  normalize(r);
+  vec3 u = normalized(cross(f, r));
+  // right handed
+  vec3 t = vec3(
+    -dot(r, position)
+    , -dot(u, position)
+    , -dot(f, position)
+  );
+  return mat4(
+    // transpose upper 3x3 matrix to invert it
+      r.x, u.x, f.x, 0
+    , r.y, u.y, f.y, 0
+    , r.z, u.z, f.z, 0
+    , t.x, t.y, t.z, 1
+  );
+}
