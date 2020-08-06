@@ -1,6 +1,7 @@
 #pragma once
 
 const float VEC_EPSILON = 0.000001f;
+const float MAT_EPSILON = 0.000001f;
 
 // the anonymouse union allows vec3 to be accessed via .x .y .z and
 // as a contiguous array using .v
@@ -194,6 +195,21 @@ struct mat4
             : xx(_00), xy(_01), xz(_02), xw(_03)
             , yx(_10), yy(_11), yz(_12), yw(_13)
             , zx(_20), zy(_21), zz(_22), zw(_23)
-            , tx(_30), ty(_31), tz(_32), tw(_33) 
+            , tx(_30), ty(_31), tz(_32), tw(_33)
             {}
 };
+
+bool operator==(const mat4& a, const mat4& b);
+mat4 operator+(const mat4& a, const mat4& b);
+mat4 operator*(const mat4& m, float f);
+mat4 operator*(const mat4& a, const mat4& b);
+vec4 operator*(const mat4& m, const vec4& v);
+vec3 transformVector(const mat4& m, const vec3& v);
+vec3 transformPoint(const mat4& m, const vec3& v);
+vec3 transformPoint(const mat4& m, const vec3& v, float& w);
+void transpose(mat4& m);
+mat4 transposed(const mat4& m);
+float determinant(const mat4& m);
+mat4 adjugate(const mat4& m);
+mat4 inverse(const mat4& m);
+void invert(mat4& m);
