@@ -488,7 +488,7 @@ mat4 ortho(float l, float r, float b, float t, float n, float f)
   );
 }
 
-// construct a view matrix 
+// construct a view matrix
 mat4 lookAt(const vec3& position, const vec3& target, const vec3& up)
 {
   vec3 f = normalized(target - position) * -1.0f;
@@ -514,4 +514,351 @@ mat4 lookAt(const vec3& position, const vec3& target, const vec3& up)
     , r.z, u.z, f.z, 0
     , t.x, t.y, t.z, 1
   );
+}
+
+
+// **********************//
+//                       //
+//      Quaternions      //
+//                       //
+// **********************//
+
+quat angleAxis(float angle, const vec3& axis)
+{
+  vec3 norm = normalized(axis);
+  // divide by 2 to map quat range to sin/cos
+  // since quat has a period of 720 degrees
+  // and sin/cos has period of 360 degrees
+  float s = std::sinf(angle * 0.5f);
+  return quat(
+      norm.x * s
+    , norm.y * s
+    , norm.z * s
+    , std::cosf(angle * 0.5f)
+  );
+}
+
+quat fromTo(const vec3& from, const vec3& to)
+{
+  // normalize and makes sure they are not the same vector
+  vec3 f = normalized(from);
+  vec3 t = normalized(to);
+  if (f == t){return quat();}
+
+  // check whether vecs are opposite each other
+  // if yes, most orthogonal axis of FROM vec
+  // can be used to create pure quaternion
+  else if (f == t * -1.0f)
+  {
+    vec3 ortho = vec3(1, 0, 0);
+    if (std::fabsf(f.y) < std::fabsf(f.x))
+    {
+      ortho = vec3(0, 1, 0);
+    }
+    if (std::fabsf(f.z) < std::fabs(f.y) && std::fabs(f.z) < std::fabsf(f.x))
+    {
+      ortho = vec3(0, 0, 1);
+    }
+    vec3 axis = normalized(cross(f, ortho));
+    return quat(axis.x, axis.y, axis.z, 0);
+  }
+
+  // create a half vec between FROM and TO vecs
+  // use cross prod of half vec and starting vec to calc
+  // axis of rotation and the dot product to find
+  // angle of rotation
+  vec3 half = normalized(f + t);
+  vec3 axis = cross(f, half);
+  return quat(
+      axis.x
+    , axis.y
+    , axis.z
+    , dot(f, half)
+  );
+}
+
+vec3 getAxis(const quat& quat)
+{
+  return normalized(vec3(quat.x, quat.y, quat.z));
+}
+
+float getAngle(const quat& quat)
+{
+  return 2.0f * std::acosf(quat.w);
+}
+
+quat operator+(const quat& a, const quat& b)
+{
+  return quat(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
+}
+
+quat operator-(const quat& a, const quat& b)
+{
+  return quat(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w);
+}
+
+quat operator*(const quat& a, float b)
+{
+  return quat(a.x * b, a.y * b, a.z * b, a.w * b);
+}
+
+quat operator-(const quat& a)
+{
+  return quat(-a.x, -a.y, -a.z, -a.w);
+}
+
+// a quaternion and its inverse rotate to the SAME SPOT
+// but take different routes
+bool operator==(const quat& left, const quat& right)
+{
+  return (std::fabsf(left.x - right.x) <= QUAT_EPSILON
+       && std::fabsf(left.y - right.y) <= QUAT_EPSILON
+       && std::fabsf(left.z - right.z) <= QUAT_EPSILON
+       && std::fabsf(left.w - right.w) <= QUAT_EPSILON);
+}
+
+bool operator!=(const quat& a, const quat& b)
+{
+  return !(a==b);
+}
+
+bool sameOrientation(const quat& a, const quat& b)
+{
+  return (std::fabsf(a.x - b.x) <= QUAT_EPSILON
+       && std::fabsf(a.y - b.y) <= QUAT_EPSILON
+       && std::fabsf(a.z - b.z) <= QUAT_EPSILON
+       && std::fabsf(a.w - b.w) <= QUAT_EPSILON)
+       ||
+         (std::fabsf(a.x + b.x) <= QUAT_EPSILON
+       && std::fabsf(a.y + b.y) <= QUAT_EPSILON
+       && std::fabsf(a.z + b.y) <= QUAT_EPSILON
+       && std::fabsf(a.w + b.w) <= QUAT_EPSILON);
+}
+
+// like vectors, dot prod. measures how similar 2 quats are
+float dot(const quat& a, const quat& b)
+{
+    return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+
+// like vectors, squared length is same as dot product of quat with itself
+// the length of a quat is the square root of the square length
+float lenSq(const quat& q)
+{
+  return q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+}
+
+float len(const quat& q)
+{
+  float lenSq = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+  if (lenSq < QUAT_EPSILON)
+  {
+    return 0.0f;
+  }
+  return std::sqrtf(lenSq);
+}
+
+// unit quaternions have a length of 1
+// quats representing a rotation should always be unit quats
+void normalize(quat& q)
+{
+  float lenSq = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+  if (lenSq < QUAT_EPSILON)
+  {
+    return;
+  }
+  // inverse length
+  float i_len = 1.0f / std::sqrtf(lenSq);
+  q.x *= i_len;
+  q.y *= i_len;
+  q.z *= i_len;
+  q.w *= i_len;
+}
+
+quat normalized(const quat& q)
+{
+  float lenSq = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+  if (lenSq < QUAT_EPSILON)
+  {
+    return quat();
+  }
+  float i_len = 1.0f / std::sqrtf(lenSq);
+  return quat(q.x * i_len
+            , q.y * i_len
+            , q.z * i_len
+            , q.w * i_len);
+}
+
+// inverse of a normalized quat is the conjugate
+// the conjugate of a quat flips its axis of rotation
+// to check if a quat is normalized: the squared length
+// of a normalized quat is ALWAYS == 1
+quat conjugate(const quat& q)
+{
+  return quat(
+      -q.x
+    , -q.y
+    , -q.z
+    , q.w
+  );
+}
+
+// proper quat inverse is the conjugate divdied by
+// squared length of the quat
+quat inverse(const quat& q)
+{
+  float lenSq = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+  if (lenSq < QUAT_EPSILON)
+  {
+    return quat();
+  }
+  float recip = 1.0f / lenSq;
+  return quat(-q.x * recip
+            , -q.y * recip
+            , -q.z * recip
+            , q.w * recip);
+}
+
+// mult opperation carried out right to left:
+// the right quats rotation is applied first, then the left
+quat operator*(const quat& q1, const quat& q2)
+{
+  return quat(
+      q2.x*q1.w + q2.y*q1.z - q2.z*q1.y + q2.w*q1.x
+    , -q2.x*q1.z + q2.w*q1.x + q2.z*q1.x + q2.w*q1.y
+    , q2.x*q1.y - q2.y*q1.x + q2.z*q1.w + q2.w*q1.z
+    , -q2.x*q1.x - q2.y*q1.y - q2.z*q1.z + q2.w*q1.w
+  );
+}
+
+// to mult a vec & quats, need to turn the vec
+// into a PURE quat, which is a quat where w = 0
+// and the vec part is normalized
+// the mult always yeilds vector that's rotated by the quat
+vec3 operator*(const quat& q, const vec3& v)
+{
+  return q.vector * 2.0f * dot(q.vector, v)
+    + v * (q.scalar * q.scalar - dot(q.vector, q.vector))
+    + cross(q.vector, v) * 2.0f * q.scalar;
+}
+
+// interpolation
+// quats are a rotation, not an orientation
+// every rotation can take long or short arc, with
+// short being best usually. to pick shortest,
+// neighborhooding is used to place quats in desired neighborhood
+// if dot product of quats is +, shorter will be taken
+// if -, longer will be taken (so negate 1 of the quats)
+// to get shorter :
+//if(dot(a,b) < 0.0f) b = -b;
+
+// this is like a lerp, but not because it travels in an arc
+// assumes both quats in desired neighborhood
+quat mix(const quat& from, const quat& to, float t)
+{
+    return from * (1.0f - t) + to * t;
+}
+
+// nlerp is a fast & good approx for spherical interpolation
+// assumes both quats in desired neighborhood
+quat nlerp(const quat& from, const quat& to, float t)
+{
+  return normalized(from + (to - from) * t);
+}
+
+// to adjust angle of a quaternion, raise it to
+// desired power. example: to adjust quat to only
+// rotate halfway, raise to power of 0.5
+// to raise a quat to a power, decompose quat into angle
+// and an axis, then angle can be adjusted by power
+// and a new quat built from the adjusted angle & axis
+quat operator^(const quat& q, float f)
+{
+  float angle = 2.0f * std::acosf(q.scalar);
+  vec3 axis = normalized(q.vector);
+  float halfCos = std::cosf(f * angle * 0.5f);
+  float halfSin = std::sinf(f * angle * 0.5f);
+  return quat(
+      axis.x * halfSin
+    , axis.y * halfSin
+    , axis.z * halfSin
+    , halfCos
+  );
+}
+
+// slerp - only use if consistent velocity required
+// if back and end quats are close together, use nlerp
+// // assumes both quats in desired neighborhood
+quat slerp(const quat& start, const quat& end, float t)
+{
+    if(std::fabsf(dot(start, end)) > 1.0f - QUAT_EPSILON)
+    {
+      return nlerp(start, end, t);
+    }
+    // could use conjugate instead of inverse since
+    // input vecs to slerp SHOULD BE NORMALIZED
+    quat delta = inverse(start) * end;
+    return normalized((delta ^ t) * start);
+}
+
+// rotation to lookAt
+quat lookRotation(const vec3& direction, const vec3& up)
+{
+  // find orthonormal basis vectors:
+  // object Forward
+  vec3 f = normalized(direction);
+  // desired up
+  vec3 u = normalized(up);
+  // right
+  vec3 r = cross(u, f);
+  // object up
+  u = cross(f, r);
+
+  // from world forward to object forward
+  quat worldToObject = fromTo(vec3(0, 0, 1), f);
+
+  // what direction is the new object up?
+  vec3 objectUp = worldToObject * vec3(0, 1, 0);
+
+  // from object up to desired up
+  quat u2u = fromTo(objectUp, u);
+
+  // rotate to forward direction first
+  // then twist to correct up
+  quat result = worldToObject * u2u;
+
+  return normalized(result);
+}
+
+// quat to mat4, simply mult world basis vectors
+// (x, y, & z world axes) by the quat & store the
+// results in the components of the matrix, in which
+// 1st column is right vec
+// 2nd column is up vec
+// 3rd column is forward vec
+mat4 quatToMat4(const quat& q)
+{
+    vec3 r = q * vec3(1, 0, 0);
+    vec3 u = q * vec3(0, 1, 0);
+    vec3 f = q * vec3(0, 0, 1);
+    return mat4(
+        r.x, r.y, r.z, 0
+      , u.x, u.y, u.z, 0
+      , f.x, f.y, f.z, 0
+      , 0  , 0  , 0  , 1
+    );
+}
+
+// a matrix stores both rotation and scale data
+// using same components, so need to normalize basis
+// vectors and the cross product needs to be used to
+// make sure vecs are orthogonal
+quat mat4ToQuat(const mat4& m)
+{
+  vec3 up = normalized(vec3(m.up.x, m.up.y, m.up.z));
+  vec3 forward = normalized(vec3(m.forward.x, m.forward.y, m.forward.z));
+  vec3 right = cross(up, forward);
+
+  up = cross(forward, right);
+  return lookRotation(forward, up);
 }
