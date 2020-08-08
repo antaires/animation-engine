@@ -52,10 +52,11 @@ struct vec3
 vec3 operator+(const vec3& a, const vec3& b);
 vec3 operator-(const vec3& a, const vec3& b);
 vec3 operator*(const vec3& v, float f);
-float operator*(const vec3& a, const vec3& b);
 float operator==(const vec3& a, const vec3& b);
 float operator!=(const vec3& a, const vec3& b);
 float dot(const vec3& a, const vec3& b);
+vec3 cross(const vec3& a, const vec3& b);
+vec3 operator*(const vec3& a, const vec3& b); // cross
 float lenSqr(const vec3& v);
 float len(const vec3& v);
 void normalize(vec3& v);       // alters input vec

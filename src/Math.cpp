@@ -108,12 +108,6 @@ vec3 operator*(const vec3& v, float f)
   return vec3(v.x * f, v.y * f, v.z * f);
 }
 
-// dot
-float operator*(const vec3& a, const vec3& b)
-{
-  return a.x * b.x + a.y * b.y + a.z * b.z;
-}
-
 float operator==(const vec3& a, const vec3& b)
 {
     vec3 diff(a - b);
@@ -215,6 +209,16 @@ vec3 reflect(const vec3& a, const vec3& b)
   float scale = dot(a, b) / bLen;
   vec3 projection2 = b * (scale * 2);
   return a - projection2;
+}
+
+// cross
+vec3 operator*(const vec3& a, const vec3& b)
+{
+  return vec3(
+    a.y * b.z - a.z * b.y
+    , a.z * b.x - a.x * b.z
+    , a.x * b.y - a.y * b.x
+  );
 }
 
 vec3 cross(const vec3& a, const vec3& b)
