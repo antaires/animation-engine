@@ -89,7 +89,7 @@ void Renderer::Draw()
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
 
-  // draw shaders / meshes here
+  // TODO draw shaders / meshes here
   // Draw all sprite components
 
   // Disable depth buffering
